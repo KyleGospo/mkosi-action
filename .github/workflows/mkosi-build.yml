@@ -1,0 +1,42 @@
+name: Build mkosi Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      distro:
+        description: 'Select the distribution to build'
+        required: true
+        type: choice
+        options:
+          - fedora
+          - debian
+          - arch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up mkosi
+      uses: siemens/setup-mkosi@v1
+      with:
+        mkosi-version: '16'
+
+    - name: Prepare mkosi build
+      run: |
+        mkdir -p mkosi_build
+        cp configs/${{ inputs.distro }}.conf mkosi_build/mkosi.conf
+
+    - name: Build mkosi image for ${{ inputs.distro }}
+      run: |
+        cd mkosi_build
+        mkosi --default-user=root --force
+
+    - name: Upload mkosi image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mkosi-image-${{ inputs.distro }}
+        path: mkosi_build/mkosi.output/
+
