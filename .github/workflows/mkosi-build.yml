@@ -20,6 +20,13 @@ on:
           - openmandriva
           - rocky
           - alma
+      compression:
+        description: 'Compression method'
+        required: true
+        type: choice
+        options:
+          - zstd
+          - gzip
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,11 +46,20 @@ jobs:
     - name: Build mkosi image for ${{ inputs.distro }}
       run: |
         cd ${{ github.workspace }}//mkosi_build
-        mkosi --distribution ${{ inputs.distro }} --include ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf build
+        mkosi --distribution ${{ inputs.distro }} --include ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf --format oci --compress-output ${{ inputs.compression }} build
 
-    - name: Upload mkosi image artifact
-      uses: actions/upload-artifact@v4
+    # Workaround bug where capital letters in your GitHub username make it impossible to push to GHCR.
+    # https://github.com/macbre/push-to-ghcr/issues/12
+    - name: Lowercase Actor
+      id: actor_case
+      uses: ASzc/change-string-case-action@d0603cd0a7dd490be678164909f65c7737470a7f # v6
       with:
-        name: mkosi-image-${{ inputs.distro }}
-        path: ${{ github.workspace }}/mkosi_build/image.raw
+        string: ${{ github.actor }}
 
+    - name: Install Skopeo
+      run: sudo apt-get install -y skopeo
+
+    - name: Upload OCI to GHCR
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        sudo skopeo copy oci:${{ github.workspace }}/mkosi_build/image docker://ghcr.io/${{ steps.actor_case.outputs.lowercase }}/${{ inputs.distro }}:latest
