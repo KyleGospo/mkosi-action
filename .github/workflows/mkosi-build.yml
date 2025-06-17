@@ -20,13 +20,6 @@ on:
           - openmandriva
           - rocky
           - alma
-      compression:
-        description: 'Compression method'
-        required: true
-        type: choice
-        options:
-          - zstd
-          - xz
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -46,7 +39,7 @@ jobs:
     - name: Build mkosi image for ${{ inputs.distro }}
       run: |
         cd ${{ github.workspace }}//mkosi_build
-        mkosi --distribution ${{ inputs.distro }} --include ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf --compress-output ${{ inputs.compression }} build
+        mkosi --distribution ${{ inputs.distro }} --include ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf build
 
     - name: Upload mkosi image artifact
       uses: actions/upload-artifact@v4
