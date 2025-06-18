@@ -1,4 +1,4 @@
-name: Build mkosi Image
+name: Build OCI image with mkosi
 
 on:
   workflow_dispatch:

@@ -1,0 +1,48 @@
+name: Build disk image with mkosi
+
+on:
+  workflow_dispatch:
+    inputs:
+      distro:
+        description: 'Desired distribution'
+        required: true
+        type: choice
+        options:
+          - fedora
+          - debian
+          - ubuntu
+          - arch
+          - opensuse
+          - mageia
+          - centos
+          - rhel
+          - rhel-ubi
+          - openmandriva
+          - rocky
+          - alma
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: setup-mkosi
+      uses: systemd/mkosi@v25.3
+
+    - name: Prepare mkosi build
+      run: |
+        mkdir -p ${{ github.workspace }}/mkosi_build
+        cp configs/${{ inputs.distro }}.conf ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf
+
+    - name: Build mkosi image for ${{ inputs.distro }}
+      run: |
+        cd ${{ github.workspace }}//mkosi_build
+        mkosi --distribution ${{ inputs.distro }} --include ${{ github.workspace }}/mkosi_build/${{ inputs.distro }}.conf --format disk build
+
+    - name: Upload mkosi image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mkosi-image-${{ inputs.distro }}
+        path: ${{ github.workspace }}/mkosi_build/image.raw
