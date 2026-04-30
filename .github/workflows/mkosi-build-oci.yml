@@ -36,7 +36,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: setup-mkosi
-      uses: systemd/mkosi@v25.3
+      uses: systemd/mkosi@v26
 
     - name: Prepare mkosi build
       run: |
